@@ -1,0 +1,37 @@
+#SQL
+select name
+from Customer
+where referee_id is null or referee_id <> 2
+
+#PANDAS
+import pandas as pd
+
+def find_customer_referee(customer: pd.DataFrame) -> pd.DataFrame:
+    return customer[(customer["referee_id"] != 2) | (customer["referee_id"].isnull())][['name']]
+
+#PYSPARK
+from pyspark.sql import SparkSession
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType
+from pyspark.sql.functions import col
+
+spark = SparkSession.builder.appName("CustomerTable").getOrCreate()
+
+data = [
+    (1, "Will", None),
+    (2, "Jane", None),
+    (3, "Alex", 2),
+    (4, "Bill", None),
+    (5, "Zack", 1),
+    (6, "Mark", 2)
+]
+
+schema = StructType([
+    StructField("id", IntegerType(), True),
+    StructField("name", StringType(), True),
+    StructField("referee_id", IntegerType(), True)
+])
+
+customer = spark.createDataFrame(data, schema)
+
+processed_data = customer.where((col('referee_id') != 2) | (col('referee_id').isNull())).select('name')
+processed_data.show()

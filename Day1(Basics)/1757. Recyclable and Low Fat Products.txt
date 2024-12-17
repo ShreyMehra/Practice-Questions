@@ -1,0 +1,38 @@
+#SQL
+select product_id
+from Products
+where low_fats = "Y" and recyclable = "Y"
+
+#PANDAS
+import pandas as pd
+
+def find_products(products: pd.DataFrame) -> pd.DataFrame:
+    return products[(products['low_fats'] == "Y") & (products['recyclable'] == "Y")][['product_id']]
+
+#PYSPARK
+from pyspark.sql import SparkSession
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType
+from pyspark.sql.functions import col
+
+spark = SparkSession.builder.appName("ProductsTable").getOrCreate()
+
+data = [
+    (0, 'Y', 'N'),
+    (1, 'Y', 'Y'),
+    (2, 'N', 'Y'),
+    (3, 'Y', 'Y'),
+    (4, 'N', 'N')
+]
+
+schema = StructType([
+    StructField("product_id", IntegerType(), True),
+    StructField("low_fats", StringType(), True),
+    StructField("recyclable", StringType(), True)
+])
+
+
+products = spark.createDataFrame(data, schema)
+
+processed_data = products.where((col('low_fats') == "Y") & (col('recyclable') == "Y")).select("product_id")  
+
+processed_data.show()
