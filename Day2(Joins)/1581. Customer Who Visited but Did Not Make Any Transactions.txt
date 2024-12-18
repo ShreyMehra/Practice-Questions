@@ -1,0 +1,46 @@
+#SQL
+select v.customer_id, count(*) as count_no_trans
+from Visits V left join Transactions T on V.visit_id = T.visit_id
+where T.transaction_id is Null
+group by V.customer_id
+
+#PANDAS
+import pandas as pd
+
+def find_customers(visits: pd.DataFrame, transactions: pd.DataFrame) -> pd.DataFrame:
+    processed_data = pd.merge(visits, transactions, on='visit_id', how='left')
+    processed_data = processed_data[processed_data['transaction_id'].isnull()]
+    processed_data = processed_data.groupby('customer_id').size().reset_index(name = 'count_no_trans')
+    return processed_data
+
+#PYSPARK
+from pyspark.sql import SparkSession
+
+spark = SparkSession.builder.master("local").appName("VisitsTransactions").getOrCreate()
+
+visits_data = [
+    (1, 23),
+    (2, 9),
+    (4, 30),
+    (5, 54),
+    (6, 96),
+    (7, 54),
+    (8, 54)
+]
+visits_columns = ["visit_id", "customer_id"]
+visits = spark.createDataFrame(visits_data, visits_columns)
+
+transactions_data = [
+    (2, 5, 310),
+    (3, 5, 300),
+    (9, 5, 200),
+    (12, 1, 910),
+    (13, 2, 970)
+]
+transactions_columns = ["transaction_id", "visit_id", "amount"]
+transactions = spark.createDataFrame(transactions_data, transactions_columns)
+
+processed_data = visits.join(transactions, how='left', on='visit_id')
+processed_data = processed_data.where(processed_data['transaction_id'].isNull()).groupby('customer_id').count().show()
+
+# visits.join(transactions, how='left', on='visit_id').where('transaction_id IS NULL').groupby('customer_id').count().show()

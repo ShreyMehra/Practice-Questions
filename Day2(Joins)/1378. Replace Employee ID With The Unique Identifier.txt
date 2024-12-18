@@ -1,0 +1,36 @@
+#SQL
+select e2.unique_id, e1.name
+from Employees e1 Left Join EmployeeUNI e2 on e1.id = e2.id
+
+#PANDAS
+
+import pandas as pd
+
+def replace_employee_id(employees: pd.DataFrame, employee_uni: pd.DataFrame) -> pd.DataFrame:
+    return pd.merge(employees, employee_uni, how='left', on='id')[['unique_id', 'name']]
+    //return pd.merge(employees, employee_uni, how='left', left_on='id', right_on='id')[['unique_id', 'name']]
+
+#PYSPARK
+from pyspark.sql import SparkSession
+
+spark = SparkSession.builder.appName("CreateDataFrames").getOrCreate()
+
+employees_data = [
+    (1, "Alice"),
+    (7, "Bob"),
+    (11, "Meir"),
+    (90, "Winston"),
+    (3, "Jonathan")
+]
+employees = spark.createDataFrame(employees_data, ["id", "name"])
+
+employee_uni_data = [
+    (3, 1),
+    (11, 2),
+    (90, 3)
+]
+employee_uni = spark.createDataFrame(employee_uni_data, ["id", "unique_id"])
+
+
+processed_data = employees.join(employee_uni, employees.id == employee_uni.id,how='left').select('unique_id', 'name')
+processed_data.show()
