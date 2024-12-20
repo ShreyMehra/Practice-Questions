@@ -1,0 +1,38 @@
+#SQL
+select E.name, B.bonus
+from (Employee E left join Bonus B on E.empId=B.empId)
+where B.bonus < 1000 or B.bonus is Null
+
+#PANDAS
+import pandas as pd
+
+def employee_bonus(employee: pd.DataFrame, bonus: pd.DataFrame) -> pd.DataFrame:
+    temp = employee.merge(bonus, how='left', on='empId')
+    return temp[(temp['bonus'] < 1000) | (temp['bonus'].isnull())][['name', 'bonus']]
+
+#PYSPARK
+from pyspark.sql import SparkSession
+
+spark = SparkSession.builder.appName("EmployeeBonus").getOrCreate()
+
+employee_data = [
+    (3, "Brad", None, 4000),
+    (1, "John", 3, 1000),
+    (2, "Dan", 3, 2000),
+    (4, "Thomas", 3, 4000)
+]
+
+employee_columns = ["empId", "name", "supervisor", "salary"]
+
+bonus_data = [
+    (2, 500),
+    (4, 2000)
+]
+
+bonus_columns = ["empId", "bonus"]
+
+employee = spark.createDataFrame(data=employee_data, schema=employee_columns)
+bonus = spark.createDataFrame(data=bonus_data, schema=bonus_columns)
+
+processed_data = employee.join(bonus, how='left', on='empId').where((bonus.bonus < 1000) | (bonus.bonus.isNull())).select('name', 'bonus')
+processed_data.show()

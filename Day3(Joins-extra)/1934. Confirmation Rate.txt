@@ -1,0 +1,20 @@
+#SQL
+with cte as 
+(
+select user_id, case when action='confirmed' then 1.00 else 0.00 end as "confirmation"
+from Confirmations
+)
+
+select s.user_id, coalesce(round(sum(c.confirmation)/count(*), 2), 0.00) as confirmation_rate
+from Signups s left join cte c on s.user_id=c.user_id  
+group by s.user_id
+
+#PANDAS
+import pandas as pd
+
+def confirmation_rate(signups: pd.DataFrame, confirmations: pd.DataFrame) -> pd.DataFrame:
+    
+    processed_data = signups.merge(confirmations, how = 'left', on='user_id')
+    return processed_data.groupby('user_id')['action'].apply(lambda x: (x == 'confirmed').sum() / len(x) if not x.empty else 0).round(2).reset_index(name='confirmation_rate')
+
+#PYSPARK
