@@ -1,0 +1,65 @@
+#SQL
+#11%
+-- select U.product_id, round(sum(U.units * P.price) / sum(U.units), 2) as average_price
+-- from UnitsSold U join Prices P on U.product_id=P.product_id and U.purchase_date between P.start_date and P.end_date
+-- group by U.product_id
+
+-- union 
+
+-- select distinct product_id, 0 as average_price 
+-- from Prices P 
+-- where P.product_id not in (select distinct U.product_id from UnitsSold U)   
+
+
+#70%
+SELECT p.product_id, IFNULL(ROUND(SUM(units*price)/SUM(units),2),0) AS average_price
+FROM Prices p LEFT JOIN UnitsSold u
+ON p.product_id = u.product_id AND
+u.purchase_date BETWEEN start_date AND end_date
+group by product_id
+
+#PANDAS
+import pandas as pd
+
+def average_selling_price(prices: pd.DataFrame, units_sold: pd.DataFrame) -> pd.DataFrame:
+    processed_data = prices.merge(units_sold, how='left', on='product_id')
+    processed_data = processed_data[processed_data.purchase_date.isna() | ((processed_data.start_date <= processed_data.purchase_date) & (processed_data.end_date >= processed_data.purchase_date))]
+
+    return processed_data.groupby('product_id').apply(lambda x: round((x['price'] * x['units']).sum() / x['units'].sum(), 2) if x['units'].sum() != 0 else 0).reset_index(name='average_price')
+
+#PYSPARK
+from pyspark.sql import SparkSession
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType
+from pyspark.sql.functions import round, sum, when, col
+
+spark = SparkSession.builder.appName("CreateTables").getOrCreate()
+
+Prices = spark.createDataFrame([
+    (1, "2019-02-17", "2019-02-28", 5),
+    (1, "2019-03-01", "2019-03-22", 20),
+    (2, "2019-02-01", "2019-02-20", 15),
+    (2, "2019-02-21", "2019-03-31", 30),
+    (3, "2019-02-21", "2019-03-31", 30)
+], StructType([
+    StructField("product_id", IntegerType(), True),
+    StructField("start_date", StringType(), True),
+    StructField("end_date", StringType(), True),
+    StructField("price", IntegerType(), True)
+]))
+
+UnitsSold = spark.createDataFrame([
+    (1, "2019-02-25", 100),
+    (1, "2019-03-01", 15),
+    (2, "2019-02-10", 200),
+    (2, "2019-03-22", 30)
+], StructType([
+    StructField("product_id", IntegerType(), True),
+    StructField("purchase_date", StringType(), True),
+    StructField("units", IntegerType(), True)
+]))
+
+processed_data = Prices.join(UnitsSold, how='left', on='product_id')
+processed_data = processed_data.where((col('purchase_date').isNull()) | ((col('purchase_date') >= col('start_date')) & (col('purchase_date') <= col('end_date')))).groupby('product_id').agg(
+    when(sum('units') != 0, round(sum(col('units') * col('price')) / sum('units'), 2)).otherwise(0).alias('average_price')).select('product_id', 'average_price')
+
+processed_data.show()

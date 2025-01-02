@@ -1,0 +1,60 @@
+SQL
+#15%
+# with cte as (
+# select *
+# from (select distinct user_id from Users) Us cross join (select distinct contest_id from Register) Re
+# )
+
+
+# select cte.contest_id, round(avg(case when r.contest_id is not null then 1 else 0 end)*100, 2) percentage
+# from cte left join Register r on cte.user_id=r.user_id and cte.contest_id=r.contest_id
+# group by cte.contest_id
+# order by percentage desc, cte.contest_id 
+
+#18%
+select contest_id, round(count(distinct user_id)/(select count(distinct user_id) from Users) * 100, 2) percentage
+from Register
+group by contest_id
+order by percentage desc, contest_id  
+
+#PANDAS
+import pandas as pd
+
+def users_percentage(users: pd.DataFrame, register: pd.DataFrame) -> pd.DataFrame:
+    count = users['user_id'].count()
+    processed_data = register.groupby('contest_id').size().reset_index(name='percentage')
+    processed_data['percentage'] = round(processed_data['percentage'] * 100 / count, 2)
+    
+    return processed_data.sort_values(['percentage', 'contest_id'], ascending=[False, True])
+
+
+#PYSPARK
+from pyspark.sql import SparkSession
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType
+from pyspark.sql.functions import round, col
+
+spark = SparkSession.builder.appName("Tables").getOrCreate()
+
+users_data = [(6, "Alice"), (2, "Bob"), (7, "Alex")]
+users_schema = StructType([
+    StructField("user_id", IntegerType(), True),
+    StructField("user_name", StringType(), True)
+])
+Users = spark.createDataFrame(users_data, schema=users_schema)
+
+register_data = [
+    (215, 6), (209, 2), (208, 2), (210, 6), (208, 6),
+    (209, 7), (209, 6), (215, 7), (208, 7), (210, 2),
+    (207, 2), (210, 7)
+]
+register_schema = StructType([
+    StructField("contest_id", IntegerType(), True),
+    StructField("user_id", IntegerType(), True)
+])
+Register = spark.createDataFrame(register_data, schema=register_schema)
+
+count = Users.select('user_id').count()
+
+processed_data = Register.groupBy('contest_id').count().withColumn('percentage', round(col('count') * 100 / count, 2)).orderBy(['percentage', 'contest_id'], ascending=[False, True])
+
+processed_data.show()
