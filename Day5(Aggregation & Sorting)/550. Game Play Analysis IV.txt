@@ -1,0 +1,13 @@
+#SQL
+
+with cte as (
+    select player_id, event_date, row_number() over (partition by player_id order by event_date) as rn
+    from Activity
+)
+
+select round(COUNT(*) / (SELECT COUNT(DISTINCT player_id) FROM cte), 2) as fraction
+from cte c1
+where rn=2 and 
+datediff(c1.event_date, (select c2.event_date
+from cte c2
+where rn=1 and c2.player_id=c1.player_id))=1

@@ -1,0 +1,25 @@
+#SQL
+
+#5%
+-- select concat(extract(year from trans_date), "-", 
+-- case 
+--     when extract(month from trans_date) > 9 then extract(month from trans_date) 
+--     else concat("0", extract(month from trans_date)) 
+-- end) as 'month',
+-- country, 
+-- count(*) as trans_count,
+-- sum(case when state like "approved" then 1 else 0 end) as approved_count,
+-- sum(amount) as trans_total_amount,
+-- sum(case when state like "approved" then amount else 0 end) as approved_total_amount
+-- from Transactions
+-- group by country, extract(year from trans_date), extract(month from trans_date)
+
+#12%
+select left(trans_date, 7) as month,
+country, 
+count(*) as trans_count,
+sum(case when state like "approved" then 1 else 0 end) as approved_count,
+sum(amount) as trans_total_amount,
+sum(case when state like "approved" then amount else 0 end) as approved_total_amount
+from Transactions
+group by country, month
