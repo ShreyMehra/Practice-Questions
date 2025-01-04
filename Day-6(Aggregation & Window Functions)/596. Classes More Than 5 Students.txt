@@ -1,0 +1,10 @@
+#SQL
+
+with cte as (
+    select student, class, row_number() over (partition by class) as rn
+    from Courses
+)
+
+select distinct class
+from cte
+where rn >= 5
