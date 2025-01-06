@@ -1,0 +1,19 @@
+#SQL
+
+#42%
+-- with cte as (
+--     select reports_to, count(*) as reports_count, round(avg(age), 0) as average_age
+--     from Employees
+--     group by reports_to
+--     having reports_to is not null
+-- )
+
+-- select e.employee_id, e.name, c.reports_count, c.average_age
+-- from cte c join Employees e on c.reports_to=e.employee_id
+-- order by e.employee_id
+
+#5%
+select e.employee_id, e.name, (select count(reports_to) from Employees where e.employee_id=reports_to) as reports_count, (select round(avg(age)) from Employees where e.employee_id=reports_to) as average_age
+from Employees e
+where e.employee_id in (select reports_to from Employees)
+order by e.employee_id

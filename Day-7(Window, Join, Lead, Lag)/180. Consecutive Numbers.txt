@@ -1,0 +1,20 @@
+#SQL
+
+#94%
+-- with cte as (
+--     select num, id, lead(num, 1) over (order by id) as lead1, lead(num, 2) over (order by id) as lead2
+--     from Logs
+-- )
+
+-- select distinct num as ConsecutiveNums
+-- from cte
+-- where num=lead1 and num=lead2
+
+#42%
+select distinct l1.num as ConsecutiveNums
+from Logs l1
+where exists (
+    select 1 from Logs l2 where l1.id+1=l2.id and l1.num=l2.num)
+and exists (  
+    select 1 from Logs l3 where l1.id+2=l3.id and l1.num=l3.num
+)

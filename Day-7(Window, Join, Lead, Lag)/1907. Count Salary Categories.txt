@@ -1,0 +1,33 @@
+#SQL
+
+#27%
+-- select 'Low Salary' as category, count(distinct account_id) as accounts_count 
+-- from Accounts 
+-- where income < 20000 union
+
+-- select 'Average Salary' as category, count(distinct account_id) as accounts_count 
+-- from Accounts 
+-- where income >= 20000 and income <=50000 
+
+-- union
+
+-- select 'High Salary' as category, count(distinct account_id) as accounts_count 
+-- from Accounts 
+-- where income > 50000
+
+with cte as (
+    select case when income < 20000 then "Low Salary"
+    when income > 50000 then "High Salary"
+    else "Average Salary" end as category
+    from Accounts
+)
+
+#5%
+select cte2.category, count(cte.category) as accounts_count
+from (select "Low Salary" as category 
+union 
+select "Average Salary" as category 
+union 
+select "High Salary" as category) cte2
+left join cte on cte2.category=cte.category
+-- group by category
