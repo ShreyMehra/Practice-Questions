@@ -1,0 +1,32 @@
+#SQL
+
+-- #35%
+-- with max_id as (
+--     select max(id) as MaxId
+--     from Seat
+-- )
+
+-- select *
+-- from (
+-- select id-1 as id, student
+-- from Seat
+-- where id%2=0 
+
+-- union
+
+-- select id+1 as id, student
+-- from Seat, max_id
+-- where id%2=1 and max_id.MaxId != id
+
+-- union
+
+-- select id, student
+-- from Seat, max_id
+-- where id%2=1 and max_id.MaxId = id) as t
+-- order by t.id
+
+#18%
+select id, case 
+when id%2=0 then lag(student) over (order by id)
+else coalesce(lead(student) over (order by id), student) end as student
+from Seat 

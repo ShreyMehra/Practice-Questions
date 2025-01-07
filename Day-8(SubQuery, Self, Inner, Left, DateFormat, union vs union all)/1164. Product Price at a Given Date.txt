@@ -1,0 +1,38 @@
+#SQL
+
+#71%
+-- select distinct product_id, 10 as price
+-- from Products
+-- where product_id not in 
+--     (
+--     select distinct product_id 
+--     from Products
+--     where change_date <= "2019-08-16"
+--     )
+
+-- union
+
+-- select product_id, new_price as price
+-- from Products
+-- where (product_id, change_date) in 
+-- (
+--     select product_id, max(change_date) 
+--     from Products
+--     where change_date <= "2019-08-16"
+--     group by product_id
+-- )
+
+#41%
+with cte1 as (
+    select product_id, new_price, rank() over (partition by product_id order by change_date desc) as rnk
+    from Products
+    where change_date <= "2019-08-16"
+),
+cte2 as (
+    select product_id, new_price
+    from cte1
+    where rnk=1
+)
+
+select distinct p.product_id, ifnull(cte2.new_price, 10) as price
+from Products p left join cte2 on cte2.product_id=p.product_id
