@@ -1,0 +1,27 @@
+#SQL
+
+#24%
+-- with cte as 
+-- (
+--     select requester_id as id
+--     from RequestAccepted
+--     union all 
+--     select accepter_id as id
+--     from RequestAccepted
+-- )
+
+-- select id, count(*) as num
+-- from cte
+-- group by id
+-- order by count(*) desc
+-- limit 1
+
+#5%
+select requester_id as id, (select count(*) from RequestAccepted where requester_id=id or accepter_id=id) as num
+from RequestAccepted
+group by requester_id
+union
+select accepter_id as id, (select count(*) from RequestAccepted where requester_id=id or accepter_id=id) as num
+from RequestAccepted
+group by accepter_id
+order by num desc limit 1

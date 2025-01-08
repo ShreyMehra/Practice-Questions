@@ -1,0 +1,21 @@
+#SQL
+
+#25%
+with dt as (
+    select visited_on, count(*) as cnt
+    from Customer
+    group by visited_on
+)
+
+, cte1 as (
+    select date_add(c1.visited_on, interval 6 day) as visited_on, 
+    sum(c2.amount)/dt.cnt as amount, 
+    round(sum(c2.amount)/7/dt.cnt, 2) as average_amount
+    from Customer c1 join Customer c2 on c2.visited_on between c1.visited_on  and date_add(c1.visited_on, interval 6 day) join dt on c1.visited_on=dt.visited_on
+    group by c1.visited_on
+    having count(*)>=7 and count(distinct c2.visited_on)=7
+    order by c1.visited_on
+)
+
+select * 
+from cte1
